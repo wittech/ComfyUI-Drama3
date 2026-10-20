@@ -39,5 +39,10 @@ their own licenses.
    https://github.com/sgl-project/sglang-omni · Apache License 2.0 (see LICENSE-APACHE)
    The Drama 3 prompt layout and sampling defaults follow its fishaudio_drama3 code.
 
+4. ComfyUI
+   https://github.com/Comfy-Org/ComfyUI · GNU General Public License v3.0 (see LICENSE)
+   drama3/kv_cache.py adapts FixedKV and FixedKVBias from comfy/text_encoders/llama.py in v0.41.0.
+   Changes: standalone cache class inside this plugin; optional Flash Attention API availability checks.
+
 The model weights are not part of this repository: Drama 3's are under the Fish Audio Community License,
 Qwen3-ASR's under the Apache License 2.0.

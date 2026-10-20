@@ -116,6 +116,9 @@ before") need that take in the prompt, which these nodes don't send.
 | Disk | 26 GB (W4A8 and the codec) | NVMe |
 | ComfyUI | v0.40 | v0.41.0 and master after v0.41.2 |
 
+The plugin includes its own legacy `FixedKVBias` implementation and uses ComfyUI's native cache API on newer
+versions. It does not require `FixedKVBias` in `comfy.text_encoders.llama` or a ComfyUI downgrade.
+
 ## Choosing a file
 
 **Start with FP8**: it holds Fish Audio's own expert weights, byte for byte, next to the checkpoint's bf16 layers.

@@ -19,10 +19,11 @@ from comfy.ldm.modules.attention import optimized_attention_for_device
 from comfy.text_encoders.llama import RMSNorm, moe_experts_forward, rope_matrix
 from comfy.text_encoders.qwen35 import GatedAttention, GatedDeltaNet, LinearKV, Qwen35Transformer, Qwen35TransformerBlock
 from . import kernels
+from .kv_cache import FixedKVBias
 from .offload import FP8Experts, experts_decode, gather_experts, kernel_bank, resident_decode, resident_prefill
 
 # ComfyUI's Qwen3.5 decode changed after v0.41.2 (#17007): attention layers make their own KV caches and a DeltaNet
-# decode step commits the previous step's token. v0.41 and older decode through FixedKVBias.
+# decode step commits the previous step's token. Older versions use our local FixedKVBias implementation.
 DEFERRED_DECODE = hasattr(LinearKV, "deferred_tracker")
 
 
@@ -140,8 +141,8 @@ class Drama3Backbone(Qwen35Transformer):
                 caches.append(layer.self_attn.init_kv_cache(1, capacity, device, dtype, shared.setdefault(device, {})))
             else:
                 if device not in shared:
-                    shared[device] = comfy.text_encoders.llama.FixedKVBias.shared(capacity, device, dtype)
-                caches.append(comfy.text_encoders.llama.FixedKVBias.zeros(1, text.num_key_value_heads, capacity, text.head_dim, device, dtype, shared[device]))
+                    shared[device] = FixedKVBias.shared(capacity, device, dtype)
+                caches.append(FixedKVBias.zeros(1, text.num_key_value_heads, capacity, text.head_dim, device, dtype, shared[device]))
         return caches
 
     def run_layers(self, x, caches, layers, devices, decode_buffers=None, after_layer=None, ahead=False):
@@ -310,7 +311,7 @@ class Drama3Tower(nn.Module):
         if DEFERRED_DECODE:
             cache, shared = comfy.text_encoders.llama.FixedKVCache, comfy.text_encoders.llama.FixedKVCache.shared(1, device)
         else:
-            cache, shared = comfy.text_encoders.llama.FixedKVBias, comfy.text_encoders.llama.FixedKVBias.shared(capacity, device, dtype)
+            cache, shared = FixedKVBias, FixedKVBias.shared(capacity, device, dtype)
         return [cache.zeros(1, cfg.n_local_heads, capacity, cfg.head_dim, device, dtype, shared)
                 for _ in range(len(self.shared_layers) + len(self.residual_layers))]
 
